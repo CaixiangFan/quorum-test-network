@@ -1,1 +1,3 @@
 /.env
+logs
+smart_contracts/privacy/node_modules
