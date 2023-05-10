@@ -124,6 +124,44 @@ async function mintTokenAtAddress(
   return result;
 }
 
+// Transfer tokens from fromAddress to recipient
+async function transferToken(
+  clientUrl,
+  contractAddress,
+  amount,
+  recipient,
+  contractAbi,
+  fromPrivateKey,
+  fromPublicKey,
+  toPublicKey
+) {
+  const web3 = new Web3(clientUrl);
+  const web3quorum = new Web3Quorum(web3, chainId);
+  const contract = new web3quorum.eth.Contract(contractAbi);
+  // eslint-disable-next-line no-underscore-dangle
+  const functionAbi = contract._jsonInterface.find((e) => {
+    return e.name === "transfer";
+  });
+  const functionArgs = web3quorum.eth.abi
+    .encodeParameters(functionAbi.inputs, [recipient,amount])
+    .slice(2);
+  const functionParams = {
+    to: contractAddress,
+    data: functionAbi.signature + functionArgs,
+    privateKey: fromPrivateKey,
+    privateFrom: fromPublicKey,
+    privateFor: [toPublicKey],
+  };
+  const transactionHash = await web3quorum.priv.generateAndSendRawTransaction(
+    functionParams
+  );
+  console.log(`Transaction hash: ${transactionHash}`);
+  const result = await web3quorum.priv.waitForTransactionReceipt(
+    transactionHash
+  );
+  return result;
+}
+
 async function main() {
   createContract(
     besu.member1.url,
@@ -132,8 +170,9 @@ async function main() {
     tessera.member3.publicKey
   )
     .then(async function (privateTxReceipt) {
-      console.log("Address of transaction: ", privateTxReceipt.contractAddress);
+      console.log("Deployed contract address: ", privateTxReceipt.contractAddress);
       let newValue = 123;
+      let transferAmount = 10;
 
       //wait for the blocks to propogate to the other nodes
       await new Promise((r) => setTimeout(r, 20000));
@@ -167,6 +206,56 @@ async function main() {
       console.log(
         "Verify the private transaction is private by reading the value from all three members .. "
       );
+      await getBalanceAtAddress(
+        besu.member1.url,
+        "Member1",
+        privateTxReceipt.contractAddress,
+        contractAbi,
+        besu.member1.accountPrivateKey,
+        besu.member1.accountAddress,
+        tessera.member1.publicKey,
+        tessera.member3.publicKey
+      );
+      await getBalanceAtAddress(
+        besu.member2.url,
+        "Member2",
+        privateTxReceipt.contractAddress,
+        contractAbi,
+        besu.member2.accountPrivateKey,
+        besu.member1.accountAddress,
+        tessera.member2.publicKey,
+        tessera.member1.publicKey
+      );
+      await getBalanceAtAddress(
+        besu.member3.url,
+        "Member3",
+        privateTxReceipt.contractAddress,
+        contractAbi,
+        besu.member3.accountPrivateKey,
+        besu.member1.accountAddress,
+        tessera.member3.publicKey,
+        tessera.member1.publicKey
+      );
+
+      await new Promise((r) => setTimeout(r, 20000));
+      console.log(
+        "Verify the transfer is a private transaction  ... "
+      );
+      console.log(
+        `Use the smart contracts 'transfer' function to update balances .. - from member1 to member3`
+      );
+      await transferToken(
+        besu.member1.url,
+        privateTxReceipt.contractAddress,
+        transferAmount,
+        besu.member3.accountAddress,
+        contractAbi,
+        besu.member1.accountPrivateKey,
+        tessera.member1.publicKey,
+        tessera.member3.publicKey
+      );
+      //wait for the blocks to propogate to the other nodes
+      await new Promise((r) => setTimeout(r, 20000));
       await getBalanceAtAddress(
         besu.member1.url,
         "Member1",
