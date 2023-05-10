@@ -51,9 +51,10 @@ async function createContract(
 async function getBalanceAtAddress(
   clientUrl,
   nodeName = "node",
-  address,
+  tokenAddress,
   contractAbi,
   fromPrivateKey,
+  accountAddress,
   fromPublicKey,
   toPublicKey
 ) {
@@ -64,9 +65,12 @@ async function getBalanceAtAddress(
   const functionAbi = contract._jsonInterface.find((e) => {
     return e.name === "balanceOf";
   });
+  const functionArgs = web3quorum.eth.abi
+  .encodeParameters(functionAbi.inputs, [accountAddress])
+  .slice(2);
   const functionParams = {
-    to: address,
-    data: functionAbi.signature,
+    to: tokenAddress,
+    data: functionAbi.signature + functionArgs,
     privateKey: fromPrivateKey,
     privateFrom: fromPublicKey,
     privateFor: [toPublicKey],
@@ -86,7 +90,7 @@ async function getBalanceAtAddress(
 
 async function mintTokenAtAddress(
   clientUrl,
-  address,
+  contractAddress,
   value,
   contractAbi,
   fromPrivateKey,
@@ -98,13 +102,13 @@ async function mintTokenAtAddress(
   const contract = new web3quorum.eth.Contract(contractAbi);
   // eslint-disable-next-line no-underscore-dangle
   const functionAbi = contract._jsonInterface.find((e) => {
-    return e.name === "set";
+    return e.name === "mint";
   });
   const functionArgs = web3quorum.eth.abi
     .encodeParameters(functionAbi.inputs, [value])
     .slice(2);
   const functionParams = {
-    to: address,
+    to: contractAddress,
     data: functionAbi.signature + functionArgs,
     privateKey: fromPrivateKey,
     privateFrom: fromPublicKey,
@@ -142,11 +146,12 @@ async function main() {
         privateTxReceipt.contractAddress,
         contractAbi,
         besu.member1.accountPrivateKey,
+        besu.member1.accountAddress,
         tessera.member1.publicKey,
         tessera.member3.publicKey
       );
       console.log(
-        `Use the smart contracts 'set' function to update that value to ${newValue} .. - from member1 to member3`
+        `Use the smart contracts 'mint' function to update that balance of ${newValue} .. - from member1 to member3`
       );
       await mintTokenAtAddress(
         besu.member1.url,
@@ -162,30 +167,33 @@ async function main() {
       console.log(
         "Verify the private transaction is private by reading the value from all three members .. "
       );
-      await getValueAtAddress(
+      await getBalanceAtAddress(
         besu.member1.url,
         "Member1",
         privateTxReceipt.contractAddress,
         contractAbi,
         besu.member1.accountPrivateKey,
+        besu.member1.accountAddress,
         tessera.member1.publicKey,
         tessera.member3.publicKey
       );
-      await getValueAtAddress(
+      await getBalanceAtAddress(
         besu.member2.url,
         "Member2",
         privateTxReceipt.contractAddress,
         contractAbi,
         besu.member2.accountPrivateKey,
+        besu.member1.accountAddress,
         tessera.member2.publicKey,
         tessera.member1.publicKey
       );
-      await getValueAtAddress(
+      await getBalanceAtAddress(
         besu.member3.url,
         "Member3",
         privateTxReceipt.contractAddress,
         contractAbi,
         besu.member3.accountPrivateKey,
+        besu.member1.accountAddress,
         tessera.member3.publicKey,
         tessera.member1.publicKey
       );
