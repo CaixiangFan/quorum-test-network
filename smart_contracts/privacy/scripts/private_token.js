@@ -27,10 +27,6 @@ async function createContract(
 ) {
   const web3 = new Web3(clientUrl);
   const web3quorum = new Web3Quorum(web3, chainId);
-  // initialize the default constructor with a value `47 = 0x2F`; this value is appended to the bytecode
-  // const contractConstructorInit = web3.eth.abi
-  //   .encodeParameter("uint256", "47")
-  //   .slice(2);
   const txOptions = {
     data: "0x" + contractBytecode,
     privateKey: fromPrivateKey,
@@ -83,7 +79,7 @@ async function getBalanceAtAddress(
     transactionHash
   );
   console.log(
-    "" + nodeName + " token balance from deployed contract is: " + result.output
+    "" + nodeName + ": token balance of "+ accountAddress + " contract is: " + result.output
   );
   return result;
 }
@@ -175,7 +171,7 @@ async function main() {
       let transferAmount = 10;
 
       //wait for the blocks to propogate to the other nodes
-      await new Promise((r) => setTimeout(r, 20000));
+      await new Promise((r) => setTimeout(r, 10000));
       console.log(
         "Use the smart contracts 'balanceOf' function to read the contract's constructor initialized value .. "
       );
@@ -202,7 +198,7 @@ async function main() {
         tessera.member3.publicKey
       );
       //wait for the blocks to propogate to the other nodes
-      await new Promise((r) => setTimeout(r, 20000));
+      await new Promise((r) => setTimeout(r, 10000));
       console.log(
         "Verify the private transaction is private by reading the value from all three members .. "
       );
@@ -237,7 +233,7 @@ async function main() {
         tessera.member1.publicKey
       );
 
-      await new Promise((r) => setTimeout(r, 20000));
+      await new Promise((r) => setTimeout(r, 10000));
       console.log(
         "Verify the transfer is a private transaction  ... "
       );
@@ -255,7 +251,7 @@ async function main() {
         tessera.member3.publicKey
       );
       //wait for the blocks to propogate to the other nodes
-      await new Promise((r) => setTimeout(r, 20000));
+      await new Promise((r) => setTimeout(r, 10000));
       await getBalanceAtAddress(
         besu.member1.url,
         "Member1",
