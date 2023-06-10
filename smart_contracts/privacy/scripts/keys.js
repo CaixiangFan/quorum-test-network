@@ -64,5 +64,9 @@ module.exports = {
       privateKey:
         "0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f",
     },
+    "0x8b7A99C5A9FD537370d94b68FBaf3F3FAfb50083": {
+      privateKey:
+        "d813a80f0534815827a582a2afe2ffad74040d4c963f6f132b33140ed0722f49"
+    }
   },
 };
